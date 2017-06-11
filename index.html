@@ -33,7 +33,7 @@
   <script src='audiomixer.js'></script>
   <script>
     mixer = new AudioMixer();
-    mixer.loadSounds('sound.mp3');
+    mixer.loadSounds('sound.ogg');
     mixer.setUpdateCallback( (average) => {
       let meter = document.getElementById('left');
       meter.style.height = 100-average + '%';
