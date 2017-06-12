@@ -5,7 +5,7 @@ class AudioMixer {
       window.AudioContext = window.AudioContext || window.webkitAudioContext;
       this.actx = new AudioContext();
       this.audioBuffer = null;
-      this.masterPan = this.actx.createStereoPanner();
+      this.masterPan = this.createPanner();
       this.masterGainNode = this.actx.createGain();
       this.splitterNode = this.actx.createChannelSplitter(2);
       this.masterAnalyserLeft = this.actx.createAnalyser()
@@ -21,12 +21,26 @@ class AudioMixer {
       this.gain = 1;
 
     } catch (e) {
+      alert("Your browser does not support this application. Use firefox, chrome or edge.");
       console.log("no audio context support");
     }
   }
 
   onError(e) {
     console.log(e);
+  }
+
+  createPanner() {
+    if(this.actx.createStereoPanner) {
+      console.log("error");
+      return this.actx.createStereoPanner();
+    } else {
+      // webkit
+      this.multiChannelPanner = true;
+      let pannerNode = this.actx.createPanner();
+			pannerNode.panningModel = 'equalpower';
+      return pannerNode;
+    }
   }
 
   loadSounds(url) {
@@ -71,7 +85,12 @@ class AudioMixer {
   }
 
   setPan(pan) {
-    this.masterPan.pan.value = pan;
+    if(!this.multiChannelPanner) {
+      this.masterPan.pan.value = pan;
+    } else {
+      let q = 1 - Math.abs(pan);
+			this.masterPan.setPosition(pan, 0, q);
+    }
   }
 
   mute() {
@@ -95,8 +114,6 @@ class AudioMixer {
     let array2 = new Uint8Array(this.masterAnalyserRight.frequencyBinCount);
     this.masterAnalyserRight.getByteFrequencyData(array2);
     let average2 = this.getAverageVolume(array2);
-
-    //console.log(average + " " + average2);
 
     this.drawTargetLeft(average);
     this.drawTargetRight(average2);
